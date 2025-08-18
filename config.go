@@ -30,25 +30,37 @@ func defaultSpanNameFormatter(_ string, req *resty.Request) string {
 	return "http " + req.Method
 }
 
+func defaultErrorDescriptionFormatter(err error) string {
+	return err.Error()
+}
+
+func defaultErrorCustomizer(err error) error {
+	return err
+}
+
 // config is used to configure the go-resty middleware.
 type config struct {
-	TracerProvider    oteltrace.TracerProvider
-	Propagators       propagation.TextMapPropagator
-	SpanNameFormatter func(string, *resty.Request) string
-	SpanStartOptions  []oteltrace.SpanStartOption
-	Skipper           func(*resty.Request) bool
-	TracerName        string
-	HideURL           bool
+	TracerProvider            oteltrace.TracerProvider
+	Propagators               propagation.TextMapPropagator
+	SpanNameFormatter         func(string, *resty.Request) string
+	ErrorDescriptionFormatter func(err error) string
+	ErrorCustmizer            func(err error) error
+	SpanStartOptions          []oteltrace.SpanStartOption
+	Skipper                   func(*resty.Request) bool
+	TracerName                string
+	HideURL                   bool
 }
 
 func newConfig(options ...Option) *config {
 	cfg := &config{
-		Propagators:       otel.GetTextMapPropagator(),
-		TracerProvider:    otel.GetTracerProvider(),
-		Skipper:           defaultSkipper,
-		TracerName:        tracerName,
-		SpanNameFormatter: defaultSpanNameFormatter,
-		HideURL:           false,
+		Propagators:               otel.GetTextMapPropagator(),
+		TracerProvider:            otel.GetTracerProvider(),
+		Skipper:                   defaultSkipper,
+		TracerName:                tracerName,
+		SpanNameFormatter:         defaultSpanNameFormatter,
+		ErrorDescriptionFormatter: defaultErrorDescriptionFormatter,
+		ErrorCustmizer:            defaultErrorCustomizer,
+		HideURL:                   false,
 	}
 
 	defaultOpts := []Option{
@@ -120,6 +132,22 @@ func WithSpanOptions(opts ...trace.SpanStartOption) Option {
 func WithSpanNameFormatter(f func(operation string, r *resty.Request) string) Option {
 	return optionFunc(func(c *config) {
 		c.SpanNameFormatter = f
+	})
+}
+
+// WithErrorDescriptionFormatter takes a function that will be called during
+// the `onError` hook to modify the error message.
+func WithErrorDescriptionFormatter(f func(err error) string) Option {
+	return optionFunc(func(c *config) {
+		c.ErrorDescriptionFormatter = f
+	})
+}
+
+// WithErrorCustomizer takes a function that will be called during
+// the `onError` hook and allows for error customization.
+func WithErrorCustomizer(f func(err error) error) Option {
+	return optionFunc(func(c *config) {
+		c.ErrorCustmizer = f
 	})
 }
 
