@@ -3,7 +3,7 @@ package otelresty
 import (
 	"net/http/httptest"
 
-	"github.com/go-resty/resty/v2"
+	"resty.dev/v3"
 )
 
 func ExampleTraceClient() {
@@ -15,7 +15,7 @@ func ExampleTraceClient() {
 	server := httptest.NewServer(testHandler())
 
 	// this hook is executed before the hook added by `TraceClient`
-	cli.OnBeforeRequest(func(c *resty.Client, r *resty.Request) error {
+	cli.AddRequestMiddleware(func(c *resty.Client, r *resty.Request) error {
 		r.Header.Add("x-custom-header", "value")
 		return nil
 	})

@@ -13,7 +13,7 @@
 package otelresty // import "github.com/dubonzi/otelresty"
 
 import (
-	"github.com/go-resty/resty/v2"
+	"resty.dev/v3"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"

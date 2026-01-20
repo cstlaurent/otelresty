@@ -10,10 +10,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package otelresty // import "github.com/dubonzi/otelresty"
+package otelresty
 
 import (
-	"github.com/go-resty/resty/v2"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -22,10 +21,11 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace"
 	oteltrace "go.opentelemetry.io/otel/trace"
+	"resty.dev/v3"
 )
 
 const (
-	tracerName = "github.com/dubonzi/otelresty"
+	tracerName = "otelresty"
 )
 
 // TraceClient instruments the resty client by adding OnBeforeRequest, OnAfterResponse and OnError hooks.
@@ -39,8 +39,8 @@ func TraceClient(client *resty.Client, options ...Option) {
 		oteltrace.WithInstrumentationVersion(SemVersion()),
 	)
 
-	client.OnBeforeRequest(onBeforeRequest(tracer, cfg))
-	client.OnAfterResponse(onAfterResponse(cfg))
+	client.AddRequestMiddleware(onBeforeRequest(tracer, cfg))
+	client.AddResponseMiddleware(onAfterResponse(cfg))
 	client.OnError(onError(cfg))
 
 }

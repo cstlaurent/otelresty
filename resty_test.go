@@ -18,7 +18,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/contrib/propagators/b3"
@@ -27,6 +26,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
+	"resty.dev/v3"
 )
 
 func TestValidSpanIsCreated(t *testing.T) {
@@ -36,7 +36,7 @@ func TestValidSpanIsCreated(t *testing.T) {
 	cli := resty.New()
 
 	TraceClient(cli, WithTracerProvider(provider))
-	cli.OnBeforeRequest(func(c *resty.Client, r *resty.Request) error {
+	cli.AddRequestMiddleware(func(c *resty.Client, r *resty.Request) error {
 		span := trace.SpanFromContext(r.Context())
 		assert.True(t, span.SpanContext().IsValid())
 		return nil
@@ -66,7 +66,7 @@ func TestPropagationWithCustomPropagator(t *testing.T) {
 
 	TraceClient(cli, WithTracerProvider(provider), WithPropagators(prop))
 
-	cli.OnBeforeRequest(func(c *resty.Client, r *resty.Request) error {
+	cli.AddRequestMiddleware(func(c *resty.Client, r *resty.Request) error {
 		span := trace.SpanFromContext(r.Context())
 		assert.True(t, span.SpanContext().IsValid())
 		assert.Equal(t, sc.TraceID(), span.SpanContext().TraceID())
